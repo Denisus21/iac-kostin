@@ -11,6 +11,6 @@ echo " Удаление подсети и сети"
 yc vpc subnet delete "$PREFIX-subnet"
 yc vpc network delete "$PREFIX-net"
 
-echo "Проверка (должны быть пустыми) "
+echo "Проверка"
 yc compute instance list
 yc compute disk list
