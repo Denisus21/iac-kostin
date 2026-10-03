@@ -14,6 +14,7 @@ DISK_SIZE="${2:-20}"
 BOOT_SIZE=15
 IMAGE_FAMILY=ubuntu-2404-lts
 
+# === 1. Сеть и подсети ===
 echo "==> сеть и подсети"
 yc vpc network create --name "$PREFIX-net"
 yc vpc subnet create --name "$PREFIX-subnet-a" --network-name "$PREFIX-net" \
@@ -21,37 +22,55 @@ yc vpc subnet create --name "$PREFIX-subnet-a" --network-name "$PREFIX-net" \
 yc vpc subnet create --name "$PREFIX-subnet-b" --network-name "$PREFIX-net" \
   --zone "$ZONE_B" --range "$CIDR_B"
 
+# === 2. Разворачиваем шаблон cloud-init ===
 echo "==> файл настройки из шаблона"
 SSH_KEY=$(cat ~/.ssh/id_ed25519.pub)
 export APP_PORT GREETING SSH_KEY
 envsubst '${APP_PORT} ${GREETING} ${SSH_KEY}' \
   < work-02/cloud-init.tpl.yaml > work-02/cloud-init.yaml
 
-echo "==> машины"
-ZONES=("$ZONE_A" "$ZONE_B")
-SUBNETS=("$PREFIX-subnet-a" "$PREFIX-subnet-b")
-for i in $(seq 1 "$VM_COUNT"); do
-  idx=$(( (i - 1) % ${#ZONES[@]} ))
-  yc compute instance create \
-    --name "$PREFIX-app-$i" \
-    --zone "${ZONES[$idx]}" \
-    --platform standard-v3 \
-    --cores=2 --core-fraction=20 --memory=2 \
-    --preemptible \
-    --create-boot-disk image-folder-id=standard-images,image-family="$IMAGE_FAMILY",type=network-hdd,size="$BOOT_SIZE" \
-    --network-interface subnet-name="${SUBNETS[$idx]}",nat-ip-version=ipv4 \
-    --hostname "$PREFIX-app-$i" \
-    --metadata-from-file user-data=work-02/cloud-init.yaml
-done
-
+# === 3. Дополнительный диск — ДО машин ===
 echo "==> дополнительный диск"
 yc compute disk create --name "$PREFIX-data" --zone "$ZONE_A" \
   --size "$DISK_SIZE" --type network-hdd
-yc compute instance attach-disk "$PREFIX-app-1" \
-  --disk-name "$PREFIX-data" \
-  --device-name data \
-  --auto-delete=false
 
+# === 4. Машины ===
+echo "==> машины"
+ZONES=("$ZONE_A" "$ZONE_B")
+SUBNETS=("$PREFIX-subnet-a" "$PREFIX-subnet-b")
+
+for i in $(seq 1 "$VM_COUNT"); do
+  idx=$(( (i - 1) % ${#ZONES[@]} ))
+
+  if [ "$i" -eq 1 ]; then
+    # Первая машина — с дополнительным диском
+    yc compute instance create \
+      --name "$PREFIX-app-$i" \
+      --zone "${ZONES[$idx]}" \
+      --platform standard-v3 \
+      --cores=2 --core-fraction=20 --memory=2 \
+      --preemptible \
+      --create-boot-disk image-folder-id=standard-images,image-family="$IMAGE_FAMILY",type=network-hdd,size="$BOOT_SIZE" \
+      --attach-disk disk-name="$PREFIX-data",device-name=data \
+      --network-interface subnet-name="${SUBNETS[$idx]}",nat-ip-version=ipv4 \
+      --hostname "$PREFIX-app-$i" \
+      --metadata-from-file user-data=work-02/cloud-init.yaml
+  else
+    # Остальные машины — без диска
+    yc compute instance create \
+      --name "$PREFIX-app-$i" \
+      --zone "${ZONES[$idx]}" \
+      --platform standard-v3 \
+      --cores=2 --core-fraction=20 --memory=2 \
+      --preemptible \
+      --create-boot-disk image-folder-id=standard-images,image-family="$IMAGE_FAMILY",type=network-hdd,size="$BOOT_SIZE" \
+      --network-interface subnet-name="${SUBNETS[$idx]}",nat-ip-version=ipv4 \
+      --hostname "$PREFIX-app-$i" \
+      --metadata-from-file user-data=work-02/cloud-init.yaml
+  fi
+done
+
+# === 5. Целевая группа ===
 echo "==> целевая группа"
 TARGETS=""
 for i in $(seq 1 "$VM_COUNT"); do
@@ -62,6 +81,7 @@ for i in $(seq 1 "$VM_COUNT"); do
 done
 yc load-balancer target-group create --name "$PREFIX-tg" $TARGETS
 
+# === 6. Балансировщик ===
 echo "==> балансировщик"
 TG_ID=$(yc load-balancer target-group get --name "$PREFIX-tg" --format json | jq -r .id)
 yc load-balancer network-load-balancer create \
