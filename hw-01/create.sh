@@ -4,7 +4,7 @@ set -euo pipefail
 WEB_COUNT="${1:-${WEB_COUNT:-2}}"
 DISK_SIZE=15
 BOOT_SIZE=15
-IMAGE_FAMILY=ubuntu-2404-lts
+IMAGE_FAMILY=debian-12
 
 PREFIX="${PREFIX:-kostin-01}"
 ZONE_A="${ZONE_A:-ru-central1-a}"
@@ -13,7 +13,7 @@ CIDR_A="${CIDR_A:-10.11.1.0/24}"
 CIDR_B="${CIDR_B:-10.11.2.0/24}"
 APP_PORT="${APP_PORT:-8003}"
 GREETING="${GREETING:-labwork}"
-ENV_NAME="${ENV_NAME:-kostin-01-env}"
+ENV_NAME="${ENV_NAME:-lab}"
 
 SSH_KEY_PATH="$HOME/.ssh/id_ed25519.pub"
 
@@ -102,7 +102,7 @@ for i in $(seq 1 "$WEB_COUNT"); do
   yc compute instance create \
     --name "$NAME" \
     --zone "${ZONES[$idx]}" \
-    --platform standard-v3 \
+    --platform standard-v2 \
     --cores=2 --core-fraction=20 --memory=2 \
     --preemptible \
     --create-boot-disk image-folder-id=standard-images,image-family="$IMAGE_FAMILY",type=network-hdd,size="$BOOT_SIZE" \
@@ -120,7 +120,7 @@ else
   yc compute instance create \
     --name "$APP_NAME" \
     --zone "$ZONE_A" \
-    --platform standard-v3 \
+    --platform standard-v2 \
     --cores=2 --core-fraction=20 --memory=2 \
     --preemptible \
     --create-boot-disk image-folder-id=standard-images,image-family="$IMAGE_FAMILY",type=network-hdd,size="$BOOT_SIZE" \
