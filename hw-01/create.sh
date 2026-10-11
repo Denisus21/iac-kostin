@@ -2,7 +2,6 @@
 set -euo pipefail
 
 WEB_COUNT="${1:-${WEB_COUNT:-2}}"
-DISK_SIZE=15
 BOOT_SIZE=15
 IMAGE_FAMILY=ubuntu-2404-lts
 
@@ -82,6 +81,7 @@ yc vpc subnet update --name "$PREFIX-subnet-a" --route-table-name "$PREFIX-rt"
 echo "==> разворачиваю cloud-init"
 SSH_KEY=$(cat "$SSH_KEY_PATH")
 export APP_PORT GREETING SSH_KEY
+# shellcheck disable=SC2016
 envsubst '${APP_PORT} ${GREETING} ${SSH_KEY}' \
   < hw-01/cloud-init.tpl.yaml > hw-01/cloud-init.yaml
 
@@ -134,14 +134,17 @@ if exists_target_group "$PREFIX-tg"; then
   echo "==> целевая группа $PREFIX-tg уже есть"
 else
   echo "==> создаю целевую группу $PREFIX-tg"
-  TARGETS=""
-  for i in $(seq 1 "$WEB_COUNT"); do
-    idx=$(( (i - 1) % ${#ZONES[@]} ))
-    IP=$(yc compute instance get "$PREFIX-web-$i" --format json \
-      | jq -r '.network_interfaces[0].primary_v4_address.address')
-    TARGETS="$TARGETS --target subnet-name=${SUBNETS[$idx]},address=$IP"
-  done
-  yc load-balancer target-group create --name "$PREFIX-tg" $TARGETS
+TARGETS=()
+
+for i in $(seq 1 "$WEB_COUNT"); do
+  idx=$(( (i - 1) % ${#ZONES[@]} ))
+  IP=$(yc compute instance get "$PREFIX-web-$i" --format json \
+    | jq -r '.network_interfaces[0].primary_v4_address.address')
+
+  TARGETS+=(--target "subnet-name=${SUBNETS[$idx]},address=$IP")
+done
+
+yc load-balancer target-group create --name "$PREFIX-tg" "${TARGETS[@]}"
 fi
 
 # Балансировщик 

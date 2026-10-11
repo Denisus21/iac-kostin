@@ -26,17 +26,17 @@ fi
 
 # Отвечает больше одной машины 
 if [ -n "$LB_IP" ]; then
-  HOSTS=$(for i in $(seq 1 10); do
+  HOSTS=$(for _ in {1..10}; do
     curl -s --max-time 3 "http://$LB_IP/" | grep -m1 -o "$GREETING on [a-z0-9-]*" || true
   done | sort -u | grep "on")
 
   COUNT=$(echo "$HOSTS" | grep -c "on" || echo 0)
   if [ "$COUNT" -gt 1 ]; then
     echo "✓ ответили машины:"
-    echo "$HOSTS" | sed 's/^/    /'
+    printf '    %s\n' "$HOSTS"
   else
     echo "✗ ответила только одна машина (распределения нет):"
-    echo "$HOSTS" | sed 's/^/    /'
+    printf '    %s\n' "$HOSTS"
     FAILED=1
   fi
 fi
