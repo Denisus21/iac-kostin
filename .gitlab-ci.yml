@@ -8,6 +8,10 @@ stages:
 shellcheck:
   stage: proverka
   image: koalaman/shellcheck-alpine:stable
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - "**/*.sh"
   script:
     - echo "Вариант 01, слово labwork"
     - shellcheck --version
@@ -29,3 +33,14 @@ proverka-dostupa:
     - echo "Вариант 01, слово labwork"
     - yc vpc network list
   when: manual
+
+yamllint:
+  stage: proverka
+  image: python:3.12-alpine
+  before_script:
+    - pip install --no-cache-dir yamllint
+  script:
+    - echo "Вариант 01, слово labwork"
+    - yamllint -d relaxed work-02/cloud-init.tpl.yaml
+
+

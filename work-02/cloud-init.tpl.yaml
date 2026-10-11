@@ -24,3 +24,4 @@ runcmd:
       mount /dev/disk/by-id/virtio-data /mnt/data
       echo '/dev/disk/by-id/virtio-data /mnt/data ext4 defaults,nofail 0 2' >> /etc/fstab
     fi
+
