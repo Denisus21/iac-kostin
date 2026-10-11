@@ -13,3 +13,19 @@ shellcheck:
     - shellcheck --version
     - find . -name '*.sh' -print
     - find . -name '*.sh' -exec shellcheck {} +
+
+proverka-dostupa:
+  stage: proverka
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache bash curl ca-certificates
+    - curl -fsSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i /opt/yc -n
+    - export PATH="/opt/yc/bin:$PATH"
+    - yc config profile create ci-profile
+    - yc config set service-account-key "$YC_KEY_LAB"
+    - yc config set cloud-id "$YC_CLOUD_ID"
+    - yc config set folder-id "$YC_FOLDER_ID"
+  script:
+    - echo "Вариант 01, слово labwork"
+    - yc vpc network list
+  when: manual
