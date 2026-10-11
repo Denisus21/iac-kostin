@@ -32,9 +32,9 @@ proverka-dostupa:
 
 yamllint:
   stage: proverka
-  image: alpine:3.20
+  image: python:3.12-alpine
   before_script:
-    - apk add --no-cache py3-yamllint
+    - pip install --no-cache-dir yamllint
   script:
     - echo "Вариант 01, слово labwork"
     - yamllint -d relaxed work-02/cloud-init.tpl.yaml
