@@ -4,6 +4,7 @@ default:
 
 stages:
   - proverka
+  - stend
 
 shellcheck:
   stage: proverka
@@ -43,4 +44,35 @@ yamllint:
     - echo "Вариант 01, слово labwork"
     - yamllint -d relaxed work-02/cloud-init.tpl.yaml
 
+.yc:
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache bash curl ca-certificates jq gettext openssh-keygen coreutils
+    - curl -fsSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i /opt/yc -n
+    - export PATH="/opt/yc/bin:$PATH"
+    - yc config profile create ci-profile
+    - yc config set service-account-key "$YC_KEY_LAB"
+    - yc config set cloud-id "$YC_CLOUD_ID"
+    - yc config set folder-id "$YC_FOLDER_ID"
 
+stend-p2:
+  extends: .yc
+  stage: stend
+  when: manual
+  variables:
+    PREFIX: kostin-01
+    GREETING: labwork
+    RUNNER_AFTER_SCRIPT_TIMEOUT: 15m
+  script:
+    - echo "Стенд второй работы из пайплайна, вариант 01, префикс $PREFIX, слово $GREETING"
+    - mkdir -p ~/.ssh
+    - ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519 -q
+    - bash work-02/create.sh
+    - bash work-02/check-lb.sh
+  after_script:
+    - export PATH="/opt/yc/bin:$PATH"
+    - yc config set service-account-key "$YC_KEY_LAB"
+    - yc config set cloud-id "$YC_CLOUD_ID"
+    - yc config set folder-id "$YC_FOLDER_ID"
+    - echo "Уборка стенда, префикс $PREFIX"
+    - bash work-02/destroy.sh
