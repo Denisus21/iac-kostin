@@ -71,5 +71,8 @@ stend-p2:
     - bash work-02/check-lb.sh
   after_script:
     - export PATH="/opt/yc/bin:$PATH"
+    - yc config set service-account-key "$YC_KEY_LAB"
+    - yc config set cloud-id "$YC_CLOUD_ID"
+    - yc config set folder-id "$YC_FOLDER_ID"
     - echo "Уборка стенда, префикс $PREFIX"
     - bash work-02/destroy.sh
