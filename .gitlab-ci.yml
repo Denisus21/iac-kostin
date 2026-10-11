@@ -8,6 +8,10 @@ stages:
 shellcheck:
   stage: proverka
   image: koalaman/shellcheck-alpine:stable
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - "**/*.sh"
   script:
     - echo "Вариант 01, слово labwork"
     - shellcheck --version
@@ -38,3 +42,5 @@ yamllint:
   script:
     - echo "Вариант 01, слово labwork"
     - yamllint -d relaxed work-02/cloud-init.tpl.yaml
+
+
