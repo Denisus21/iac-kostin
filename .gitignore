@@ -12,3 +12,6 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 *.tfbackend
+
+# Значения с секретами
+*.auto.tfvars
