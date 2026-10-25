@@ -15,19 +15,24 @@ data "yandex_compute_image" "base" {
 }
 
 resource "yandex_compute_instance" "app" {
-  name        = "kostin-01-tf-app"
-  hostname    = "kostin-01-tf-app"
-  zone        = "ru-central1-e"
-  platform_id = "standard-v3"
+  name                      = "kostin-01-tf-app"
+  hostname                  = "kostin-01-tf-app"
+  allow_stopping_for_update = true
+  zone                      = "ru-central1-e"
+  platform_id               = "standard-v3"
 
   resources {
     cores         = 2
     core_fraction = 20
-    memory        = 2
+    memory        = 4
   }
 
   scheduling_policy {
     preemptible = true
+  }
+
+  secondary_disk {
+    disk_id = yandex_compute_disk.extra.id
   }
 
   boot_disk {
@@ -61,4 +66,11 @@ resource "yandex_compute_instance" "app" {
 output "app_ip" {
   description = "Публичный IP-адрес виртуальной машины"
   value       = yandex_compute_instance.app.network_interface[0].nat_ip_address
+}
+
+resource "yandex_compute_disk" "extra" {
+  name = "kostin-01-tf-extra"
+  type = "network-hdd"
+  zone = "ru-central1-e"
+  size = 5
 }
