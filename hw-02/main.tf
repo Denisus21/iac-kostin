@@ -25,7 +25,7 @@ data "yandex_compute_image" "os" {
 resource "yandex_compute_instance" "web" {
   # Один блок с count создаёт все веб-серверы.
   # Уменьшение count удаляет машины с последних индексов.
-  count = 2
+  count = 3
 
   name     = "kostin-01-hw2-web-${count.index + 1}"
   hostname = "kostin-01-hw2-web-${count.index + 1}"
@@ -36,7 +36,7 @@ resource "yandex_compute_instance" "web" {
   # с сохранением распределения ВМ между двумя зонами.
   # Зоны e и d используются из-за ограничений доступности
   # исходных зон варианта 01 в Yandex Cloud.
-  zone        = count.index % 2 == 0 ? "ru-central1-e" : "ru-central1-d"
+  zone        = count.index == 0 ? "ru-central1-e" : "ru-central1-d"
   platform_id = "standard-v3"
   resources {
     cores         = 2
@@ -55,7 +55,7 @@ resource "yandex_compute_instance" "web" {
   }
 
   network_interface {
-    subnet_id = count.index % 2 == 0 ? yandex_vpc_subnet.a.id : yandex_vpc_subnet.b.id
+    subnet_id = count.index == 0 ? yandex_vpc_subnet.a.id : yandex_vpc_subnet.b.id
     nat       = true
   }
 
