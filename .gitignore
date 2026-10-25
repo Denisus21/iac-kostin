@@ -1,3 +1,14 @@
 work-02/cloud-init.yaml
 hw-01/cloud-init.yaml
 hw-01/cloud-init.yaml
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+*.tfbackend
