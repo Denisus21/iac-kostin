@@ -60,3 +60,8 @@ resource "yandex_compute_instance" "app" {
   labels = local.common_labels
 }
 
+moved {
+  from = yandex_compute_instance.app
+  to   = yandex_compute_instance.app["1"]
+}
+

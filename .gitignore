@@ -10,6 +10,7 @@ hw-01/cloud-init.yaml
 crash.log
 crash.*.log
 *.tfvars
+!/work-05/terraform.tfvars
 *.tfvars.json
 *.tfbackend
 
