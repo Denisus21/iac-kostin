@@ -76,3 +76,42 @@ stend-p2:
     - yc config set folder-id "$YC_FOLDER_ID"
     - echo "Уборка стенда, префикс $PREFIX"
     - bash work-02/destroy.sh
+
+
+
+# Домашняя работа № 2: проверки Terraform.
+
+.terraform:
+  image:
+    name: hashicorp/terraform:1.15.8
+    entrypoint: [""]
+  variables:
+    TF_IN_AUTOMATION: "true"
+    TF_INPUT: "false"
+  before_script:
+    - |
+      cat > /tmp/terraformrc <<'EOF'
+      provider_installation {
+        network_mirror {
+          url     = "https://terraform-mirror.yandexcloud.net/"
+          include = ["registry.terraform.io/*/*"]
+        }
+        direct {
+          exclude = ["registry.terraform.io/*/*"]
+        }
+      }
+      EOF
+    - export TF_CLI_CONFIG_FILE=/tmp/terraformrc
+
+terraform-fmt:
+  extends: .terraform
+  stage: proverka
+  script:
+    - terraform -chdir=hw-02 fmt -check -diff -recursive
+
+terraform-validate:
+  extends: .terraform
+  stage: proverka
+  script:
+    - terraform -chdir=hw-02 init -backend=false
+    - terraform -chdir=hw-02 validate

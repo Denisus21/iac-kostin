@@ -1,0 +1,10 @@
+prefix       = "kostin-01"
+zone         = "ru-central1-e"
+subnet_cidr  = "10.11.1.0/24"
+app_port     = 8003
+disk_size    = 10
+vm_count     = 2
+image_family = "debian-12"
+greeting     = "labwork"
+env          = "lab"
+open_ports   = [22, 8003]
