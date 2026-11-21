@@ -1,4 +1,11 @@
 #cloud-config
+apt:
+  preserve_sources_list: false
+  sources_list: |
+    deb http://mirror.yandex.ru/debian/ bookworm main
+    deb http://mirror.yandex.ru/debian/ bookworm-updates main
+    deb http://mirror.yandex.ru/debian-security/ bookworm-security main
+
 users:
   - name: student
     groups: sudo
